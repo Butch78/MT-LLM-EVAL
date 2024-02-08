@@ -3,24 +3,25 @@ from bert_score import score
 from sentence_transformers import SentenceTransformer, util
 
 # from bart_score import BARTScorer
-from data.schema.card import Card, BertScore, RougeScore
+from data.schema.card import Evalutation, Card, RougeScore, BertScore
 
 
 class Evaluator:
-    def __init__(self, chunk: str, content: str):
+    def __init__(self, card: Card):
         self.rouge_scorer = rouge_scorer.RougeScorer(
             ["rouge1", "rouge2", "rougeL"], use_stemmer=True
         )
         self.bert_scorer = score
         # self.bart_scorer = BARTScorer()
-        self.chunk = chunk
-        self.content = content
+        self.card: Card = card
 
     def get_rouge_score(self, reference_summary, candidate_summary) -> RougeScore:
         """
         Rough Score is a measure of the overlap between the candidate summary and the reference summary
 
-        It
+        Args:
+            reference_summary (str): The reference summary
+            candidate_summary (str): The candidate summary
 
         """
         scores = self.rouge_scorer.score(reference_summary, candidate_summary)
@@ -53,21 +54,27 @@ class Evaluator:
         print("Cosine Score: ", cosine_score)
         return cosine_score.item()
 
-    def evaluate(self) -> Card:
+    def evaluate(self) -> Evalutation:
         # bart_score = self.get_bart_score(
         #     reference=self.chunk, candidate=self.content
         # )
-        return Card(
-            chunk=self.chunk,
-            content=self.content,
-            rouge_score=self.get_rouge_score(
-                reference_summary=self.chunk, candidate_summary=self.content
-            ),
-            bert_score=self.get_bert_score(
-                reference=self.chunk, candidate=self.content
-            ),
+
+        rouge_score = self.get_rouge_score(
+            reference_summary=self.card.chunk, candidate_summary=self.card.content
+        )
+        bert_score = self.get_bert_score(reference=self.card.chunk, candidate=self.card.content)
+
+        return Evalutation(
+            chunk=self.card.chunk,
+            content=self.card.content,
+            rouge1=rouge_score.rouge1,
+            rouge2=rouge_score.rouge2,
+            rougeL=rouge_score.rougeL,
+            bert_score_P=bert_score.P,
+            bert_score_R=bert_score.R,
+            bert_score_F1=bert_score.F1,
             # bart_score=bart_score,
             similarity_score=self.get_similarity_score(
-                reference=self.chunk, candidate=self.content
+                reference=self.card.chunk, candidate=self.card.content
             ),
         )
