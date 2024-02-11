@@ -29,12 +29,18 @@ def pdf_to_chunks():
         # Read the PDf file
         reader = PdfReader(pdf_path)
         number_of_pages = len(reader.pages)
-        print("Number of pages: " + str(number_of_pages))
+        print(f"{pdf_path} Number of pages: " + str(number_of_pages))
         for page in reader.pages:
             text += page.extract_text()
 
+        # Save the extracted text to a text file with the same name as the pdf but with a txt extension in the /data/raw folder
+        text_file = pdf_file.replace(".pdf", ".txt")
+        text_path = os.path.join(raw_dir, text_file)
+        with open(text_path, "w") as file:
+            file.write(text)
+
         # Semantically Split the text into chunks
-        splitter = CharacterTextSplitter(trim_chunks=False)
+        splitter = CharacterTextSplitter(trim_chunks=True)
         chunks = splitter.chunks(text, chunk_capacity=CHUNK_SIZE)
         print("Number of chunks: " + str(len(chunks)))
 
@@ -101,8 +107,7 @@ def evalute_flashcards(chapter_name: str, parquet_file_path: str, n_threads: int
     evaluations = []
     for card in df.rows(named=True):
         evaluator = Evaluator(chunk=card["chunk"], content=card["content"])
-        evaluation = evaluator.evaluate()
-        evaluations.append(evaluation)
+        evaluations.append(evaluator.evaluate())
 
     #  Export the evaluations to a parquet file
     df = pl.DataFrame(evaluations)
@@ -125,5 +130,6 @@ create_flashcards(
 )
 
 # Call the evalute_flashcards function to evaluate the flashcards
-evalute_flashcards("chapter_1", f"./data/interim/flashcards_chapter_1_{CHUNK_SIZE}.parquet")
-
+evalute_flashcards(
+    "chapter_1", f"./data/interim/flashcards_chapter_1_{CHUNK_SIZE}.parquet"
+)
