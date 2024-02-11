@@ -8,8 +8,9 @@ import concurrent.futures
 from data.schema.card import Card
 from evalutator import Evaluator
 
-
+# The PDFs documents are stored in the source directory
 source_dir = "./data/source"
+# The extracted text from the PDFs will be stored in the raw directory
 raw_dir = "./data/raw"
 
 # Any smaller and it would create to many cards per chapter
@@ -120,9 +121,9 @@ pdf_to_chunks()
 # Call the create_flashcards function to create flashcards from the chunks of text
 create_flashcards(
     "chapter_1",
-    "./data/raw/Effective Software Testing Chapter 1_{CHUNK_SIZE}.parquet",
+    f"./data/raw/Effective Software Testing Chapter 1_{CHUNK_SIZE}.parquet",
 )
 
 # Call the evalute_flashcards function to evaluate the flashcards
-evalute_flashcards("chapter_1", "./data/interim/flashcards_chapter_1_{CHUNK_SIZE}.parquet")
+evalute_flashcards("chapter_1", f"./data/interim/flashcards_chapter_1_{CHUNK_SIZE}.parquet")
 
