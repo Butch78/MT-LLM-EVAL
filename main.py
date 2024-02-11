@@ -56,7 +56,7 @@ def create_flashcards(chapter_name: str, parquet_file_path: str, n_threads: int 
     """
     This function takes a chunk of text and uses the OpenAI API to create flashcards from the text
     """
-    client = OpenAI()
+    client = OpenAI(api_key=os.environ["OPENAI_API_KEY"])
 
     df = pl.read_parquet(parquet_file_path)
     chunks = df["chunk"].to_list()
