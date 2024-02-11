@@ -5,11 +5,15 @@ from openai import OpenAI
 import polars as pl
 import concurrent.futures
 
+from data.schema.card import Card
+from evalutator import Evaluator
+
 
 source_dir = "./data/source"
 raw_dir = "./data/raw"
 
-CHUNK_SIZE = 500
+# Any smaller and it would create to many cards per chapter
+CHUNK_SIZE = 2000
 
 
 def pdf_to_chunks():
@@ -37,7 +41,6 @@ def pdf_to_chunks():
         parquet_file = pdf_file.replace(".pdf", f"_{CHUNK_SIZE}.parquet")
         parquet_path = os.path.join(raw_dir, parquet_file)
 
-
         df = pl.DataFrame({"chunk": chunks})
         df.write_parquet(parquet_path)
 
@@ -49,7 +52,7 @@ def create_flashcards(chapter_name: str, parquet_file_path: str, n_threads: int 
     client = OpenAI()
 
     df = pl.read_parquet(parquet_file_path)
-    chunks = df["chunks"].to_list()
+    chunks = df["chunk"].to_list()
     flash_cards = []
 
     def fetch_fn(chunk: str) -> str:
@@ -60,7 +63,9 @@ def create_flashcards(chapter_name: str, parquet_file_path: str, n_threads: int 
             messages=[
                 {
                     "role": "system",
-                    "content": """You are an Expert ANKI Card Maker, You are able to make great content for your users from any text, It is only relevant to the topic at hand. You output the ANKI cards in the following JSON format. {"Front": "Question About Content", "Back": "Answer to Question about Content"}""",
+                    "content": """You are an Expert ANKI Card Maker, You are able to make great content for your users from any text, It is only relevant to the topic at hand. 
+                    You are able to comprehend the whole content and find the most important and difficult part of the content, Using the ost relevalent and important part of the content,
+                    You output the ANKI cards in the following JSON format. {"Front": "Question About Content", "Back": "Answer to Question about Content"}""",
                 },
                 {
                     "role": "user",
@@ -72,23 +77,52 @@ def create_flashcards(chapter_name: str, parquet_file_path: str, n_threads: int 
         # Then use the dictionary to create a Card object
         # Then return the Card object
 
-        return response.choices[0].message.content
+        return Card(chunk=chunk, content=response.choices[0].message.content)
 
     with concurrent.futures.ThreadPoolExecutor(max_workers=n_threads) as executor:
-        flashcards = list(executor.map(fetch_fn, chunks))
+        flash_cards = list(executor.map(fetch_fn, chunks))
+
+    print(f"Number of flashcards: {len(flash_cards)}")
+    print(f"First flashcard: {flash_cards[0].model_dump()}")
 
     dicts = [card.model_dump() for card in flash_cards]
     df = pl.DataFrame(dicts)
-    df.write_parquet(f"./data/interim/{chapter_name}.parquet")
+    df.write_parquet(f"./data/interim/flashcards_{chapter_name}_{CHUNK_SIZE}.parquet")
 
-    return flashcards
+    return flash_cards
+
+    # Call the pdf_to_chunks function
+    # pdf_to_chunks()
 
 
-# Call the pdf_to_chunks function
+def evalute_flashcards(chapter_name: str, parquet_file_path: str, n_threads: int = 4):
+    df = pl.read_parquet(parquet_file_path)
+    evaluations = []
+    for card in df.rows(named=True):
+        evaluator = Evaluator(chunk=card["chunk"], content=card["content"])
+        evaluation = evaluator.evaluate()
+        evaluations.append(evaluation)
+
+    #  Export the evaluations to a parquet file
+    df = pl.DataFrame(evaluations)
+
+    #  Get the count of the evaluations
+    df.write_parquet(
+        f"./data/interim/evaluations_{chapter_name}_{str(len(evaluations))}.parquet"
+    )
+
+    print(f"Number of evaluations: {len(evaluations)}")
+
+
+# Call the pdf_to_chunks function to extract the text from the pdfs and save them to parquet files
 pdf_to_chunks()
 
+# Call the create_flashcards function to create flashcards from the chunks of text
+create_flashcards(
+    "chapter_1",
+    "./data/raw/Effective Software Testing Chapter 1_{CHUNK_SIZE}.parquet",
+)
 
-# create_flashcards_from_chunks(
-#     "chapter_1", "./data/raw/Effective Software Testing Chapter 1.txt"
-# )
-# evalute_flashcards("chapter_1_2000.parquet")
+# Call the evalute_flashcards function to evaluate the flashcards
+evalute_flashcards("chapter_1", "./data/interim/flashcards_chapter_1_{CHUNK_SIZE}.parquet")
+

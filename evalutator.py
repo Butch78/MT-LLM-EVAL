@@ -3,17 +3,18 @@ from bert_score import score
 from sentence_transformers import SentenceTransformer, util
 
 # from bart_score import BARTScorer
-from data.schema.card import Evalutation, Card, RougeScore, BertScore
+from data.schema.card import Evalutation, RougeScore, BertScore
 
 
 class Evaluator:
-    def __init__(self, card: Card):
+    def __init__(self, chunk: str, content: str):
         self.rouge_scorer = rouge_scorer.RougeScorer(
             ["rouge1", "rouge2", "rougeL"], use_stemmer=True
         )
         self.bert_scorer = score
         # self.bart_scorer = BARTScorer()
-        self.card: Card = card
+        self.chunk = chunk
+        self.content = content
 
     def get_rouge_score(self, reference_summary, candidate_summary) -> RougeScore:
         """
@@ -60,13 +61,15 @@ class Evaluator:
         # )
 
         rouge_score = self.get_rouge_score(
-            reference_summary=self.card.chunk, candidate_summary=self.card.content
+            reference_summary=self.chunk, candidate_summary=self.content
         )
-        bert_score = self.get_bert_score(reference=self.card.chunk, candidate=self.card.content)
+        bert_score = self.get_bert_score(
+            reference=self.chunk, candidate=self.content
+        )
 
         return Evalutation(
-            chunk=self.card.chunk,
-            content=self.card.content,
+            chunk=self.chunk,
+            content=self.content,
             rouge1=rouge_score.rouge1,
             rouge2=rouge_score.rouge2,
             rougeL=rouge_score.rougeL,
@@ -75,6 +78,6 @@ class Evaluator:
             bert_score_F1=bert_score.F1,
             # bart_score=bart_score,
             similarity_score=self.get_similarity_score(
-                reference=self.card.chunk, candidate=self.card.content
+                reference=self.chunk, candidate=self.content
             ),
         )

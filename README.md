@@ -19,21 +19,27 @@ List of the Lexical Metrics:
 We will use the following methodology to measure the relevancy of the Flash Cards to the source material.
 
 1. We will create a set of Flash Cards using a LLM. 
-   a. We will extract the text from the source material.
+    a. We will extract the text from the source material.
     b. We will create a set of Flash Cards using a LLM.
+    c. We will measure the Lexical Metrics of the Flash Cards to the source material.
 2. We will create a set of Flash Cards using a Domain Expert.
-3. We will create a set of Flash Cards using a Random Generator.
-4. We will create a set of Flash Cards using a Domain Exp
 
 
 
+# Creating the Flash Cards using a LLM
+
+
+## Installation & Environment Setup
+
+If you are using VSCode, you can use the [devcontainer](https://code.visualstudio.com/docs/devcontainers/containers) to install the relevant python version.
+
+**Create a virtual environment**
 ```bash
 python -m venv .venv
 source .venv/bin/activate
 
 ```
-
-## Installation
+**Installation**
 
 ```bash
 pip install -r requirements.txt
@@ -41,8 +47,8 @@ pip install -r requirements.txt
 
 ## Usage
 
-
-
+To run the program, use the following command:
 ```bash
 python main.py
 ```
+It will then create the Flashcards from the source material 
