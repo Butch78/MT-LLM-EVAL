@@ -1,9 +1,20 @@
 from pydantic import BaseModel
 
 
-class Card(BaseModel):
-    chunk: str
+class Section(BaseModel):
+    section_heading: str
+    text: str
+    character_count: int = 0
+    token_count: int = 0
+
+
+class Flashcard(BaseModel):
+    section_heading: str
+    text: str
     content: str
+    character_count: int = 0
+    token_count: int = 0
+    flash_card_content: str = ""
 
 
 class RougeScore(BaseModel):
@@ -19,7 +30,10 @@ class BertScore(BaseModel):
 
 
 class Evalutation(BaseModel):
-    chunk: str
+    character_count: int
+    token_count: int
+    section_heading: str
+    section: str
     content: str
     rouge1: float
     rouge2: float
