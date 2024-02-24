@@ -1,20 +1,25 @@
 from rouge_score import rouge_scorer
 from bert_score import score
+from nltk.translate.bleu_score import sentence_bleu
 from sentence_transformers import SentenceTransformer, util
+
 
 # from bart_score import BARTScorer
 from data.schema.card import Evalutation, RougeScore, BertScore
 
 
 class Evaluator:
-    def __init__(self, chunk: str, content: str):
+    def __init__(self, card: dict):
         self.rouge_scorer = rouge_scorer.RougeScorer(
             ["rouge1", "rouge2", "rougeL"], use_stemmer=True
         )
         self.bert_scorer = score
         # self.bart_scorer = BARTScorer()
-        self.chunk = chunk
-        self.content = content
+        self.text = card["text"]
+        self.content = card["content"]
+        self.section_heading = card["section_heading"]
+        self.character_count = card["character_count"]
+        self.token_count = card["token_count"]
 
     def get_rouge_score(self, reference_summary, candidate_summary) -> RougeScore:
         """
@@ -55,29 +60,43 @@ class Evaluator:
         print("Cosine Score: ", cosine_score)
         return cosine_score.item()
 
+    def get_bleu_sentence_score(self, reference, candidate):
+        """
+        TODO: Implemenent: https://www.digitalocean.com/community/tutorials/bleu-score-in-python
+
+        """
+
+        return sentence_bleu(reference, candidate)
+
     def evaluate(self) -> Evalutation:
         # bart_score = self.get_bart_score(
-        #     reference=self.chunk, candidate=self.content
+        #     reference=self.section, candidate=self.content
         # )
 
-        rouge_score = self.get_rouge_score(
-            reference_summary=self.chunk, candidate_summary=self.content
-        )
-        bert_score = self.get_bert_score(
-            reference=self.chunk, candidate=self.content
+        bleu_score = self.get_bleu_sentence_score(
+            reference=self.text, candidate=self.content
         )
 
+        rouge_score = self.get_rouge_score(
+            reference_summary=self.text, candidate_summary=self.content
+        )
+        bert_score = self.get_bert_score(reference=self.text, candidate=self.content)
+
         return Evalutation(
-            chunk=self.chunk,
+            section=self.text,
             content=self.content,
+            section_heading=self.section_heading,
+            character_count=self.character_count,
+            token_count=self.token_count,
             rouge1=rouge_score.rouge1,
             rouge2=rouge_score.rouge2,
             rougeL=rouge_score.rougeL,
             bert_score_P=bert_score.P,
             bert_score_R=bert_score.R,
             bert_score_F1=bert_score.F1,
+            bleu_score=bleu_score,
             # bart_score=bart_score,
             similarity_score=self.get_similarity_score(
-                reference=self.chunk, candidate=self.content
+                reference=self.text, candidate=self.content
             ),
         )

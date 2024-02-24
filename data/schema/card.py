@@ -38,6 +38,7 @@ class Evalutation(BaseModel):
     rouge1: float
     rouge2: float
     rougeL: float
+    bleu_score: float
     bert_score_P: float
     bert_score_R: float
     bert_score_F1: float
