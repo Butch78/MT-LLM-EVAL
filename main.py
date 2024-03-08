@@ -16,6 +16,7 @@ def fetch_fn(section: str) -> str:
 
     response = client.chat.completions.create(
         model="gpt-4-1106-preview",
+        temperature=1.5,
         #  https://platform.openai.com/docs/guides/text-generation/json-mode
         response_format={"type": "json_object"},
         messages=[
@@ -45,7 +46,7 @@ def create_flashcards(parquet_file_path: str):
     """
     pl.read_parquet(parquet_file_path).with_columns(
         pl.col("text").map_elements(fetch_fn, return_dtype=pl.Utf8).alias("content")
-    ).write_parquet("./data/interim/gpt_4_1106_flashcards_chapter_3_sections.parquet")
+    ).write_parquet("./data/final/gpt_4_1106_15_flashcards_chapter_2_sections.parquet")
 
 
 def evalute_flashcards(chapter_name: str, parquet_file_path: str, n_threads: int = 4):
@@ -64,38 +65,38 @@ def evalute_flashcards(chapter_name: str, parquet_file_path: str, n_threads: int
 
 
 # Call the create_flashcards function to create flashcards from the chunks of text
-# create_flashcards(
-#     "./data/raw/chapter_3_sections.parquet",
-# )
+create_flashcards(
+    "./data/final/chapter_2_sections_filtered.parquet",
+)
 
 # # Call the evalute_flashcards function to evaluate the flashcards
 
 
 # GTP-4-1106
-evalute_flashcards(
-    "gpt_4_1106_chapter_1",
-    "./data/interim/gpt_4_1106_flashcards_chapter_1_sections.parquet",
-)
-evalute_flashcards(
-    "gpt_4_1106_chapter_2",
-    "./data/interim/gpt_4_1106_flashcards_chapter_2_sections.parquet",
-)
-evalute_flashcards(
-    "gpt_4_1106_chapter_3",
-    "./data/interim/gpt_4_1106_flashcards_chapter_3_sections.parquet",
-)
+# evalute_flashcards(
+#     "gpt_4_1106_chapter_1",
+#     "./data/interim/gpt_4_1106_flashcards_chapter_1_sections.parquet",
+# )
+# evalute_flashcards(
+#     "gpt_4_1106_chapter_2",
+#     "./data/interim/gpt_4_1106_flashcards_chapter_2_sections.parquet",
+# )
+# evalute_flashcards(
+#     "gpt_4_1106_chapter_3",
+#     "./data/interim/gpt_4_1106_flashcards_chapter_3_sections.parquet",
+# )
 
 
-# GPT-3-1106
-evalute_flashcards(
-    "chapter_1",
-    "./data/interim/flashcards_chapter_1_sections.parquet",
-)
-evalute_flashcards(
-    "chapter_2",
-    "./data/interim/flashcards_chapter_2_sections.parquet",
-)
-evalute_flashcards(
-    "chapter_3",
-    "./data/interim/flashcards_chapter_3_sections.parquet",
-)
+# # GPT-3-1106
+# evalute_flashcards(
+#     "chapter_1",
+#     "./data/interim/flashcards_chapter_1_sections.parquet",
+# )
+# evalute_flashcards(
+#     "chapter_2",
+#     "./data/interim/flashcards_chapter_2_sections.parquet",
+# )
+# evalute_flashcards(
+#     "chapter_3",
+#     "./data/interim/flashcards_chapter_3_sections.parquet",
+# )
